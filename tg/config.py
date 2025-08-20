@@ -17,6 +17,8 @@ CONFIG_DIR = os.path.expanduser("~/.config/tg/")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "conf.py")
 FILES_DIR = os.path.expanduser("~/.cache/tg/")
 MAILCAP_FILE: Optional[str] = None
+PREFIX: str = "-"
+
 
 LOG_LEVEL = "INFO"
 LOG_PATH = os.path.expanduser("~/.local/share/tg/")
@@ -113,7 +115,7 @@ KEEP_MEDIA = 7
 
 FILE_PICKER_CMD = "ranger --choosefile={file_path}"
 
-DOWNLOAD_DIR = os.path.expanduser("~/Downloads/")
+DOWNLOAD_DIR = os.path.expanduser("~/Downloads/i3gram/")
 
 if os.path.isfile(CONFIG_FILE):
     config_params = runpy.run_path(CONFIG_FILE)

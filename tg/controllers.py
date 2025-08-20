@@ -1,6 +1,7 @@
 import logging
 import os
 import shlex
+import tg.commands.handlers  # noqa
 from datetime import datetime
 from functools import partial, wraps
 from queue import Queue
@@ -24,6 +25,8 @@ from tg.utils import (
     suspend,
 )
 from tg.views import View
+
+from tg.commands import Copy, DeleteFromDownloadDir, file_exists, message
 
 log = logging.getLogger(__name__)
 
@@ -314,8 +317,13 @@ class Controller:
             return
         self.tg.send_chat_action(chat_id, ChatAction.chatActionTyping)
         if msg := self.view.status.get_input():
-            self.model.send_message(text=msg)
-            self.present_info("Message sent")
+            cmd = message(message=msg, telegram=self.tg, model=self.model)
+            if not cmd.dispatch():
+                self.model.send_message(text=msg)
+                self.present_info("Message sent")
+            else:
+                self.present_info("Command executed")
+                return
         else:
             self.tg.send_chat_action(chat_id, ChatAction.chatActionCancel)
             self.present_info("Message wasn't sent")
@@ -466,7 +474,9 @@ class Controller:
     def download(self, file_id: int, chat_id: int, msg_id: int) -> None:
         log.info("Downloading file: file_id=%s", file_id)
         self.model.downloads[file_id] = (chat_id, msg_id)
-        self.tg.download_file(file_id=file_id)
+        result = self.tg.download_file(file_id=file_id)
+        # file_info = result.wait(raise_exc=True)
+        log.info(f"Path: {result.id}")
         log.info("Downloaded: file_id=%s", file_id)
 
     def can_send_msg(self) -> bool:
@@ -483,13 +493,18 @@ class Controller:
             return
 
         path = msg.local_path
+        log.info(f"Path: {path}")
+        Copy(path)
         if not path:
             self.present_info("File should be downloaded first")
             return
         chat_id = self.model.chats.id_by_index(self.model.current_chat)
         if not chat_id:
             return
+
         self.tg.open_message_content(chat_id, msg.msg_id)
+        if file_exists(path):
+            DeleteFromDownloadDir(path)
         with suspend(self.view) as s:
             s.open_file(path, cmd)
 
