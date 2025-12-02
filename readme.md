@@ -21,6 +21,7 @@ Telegram terminal client.
 - [X] list contacts
 - [X] show user status
 - [X] secret chats
+- [X] **multi-account support** - manage multiple Telegram accounts
 - [ ] search
 - [ ] bots (bot keyboard)
 
@@ -284,3 +285,46 @@ Run task to automatically increase version and release (https://taskfile.dev):
 ```sh
 task release
 ```
+
+## Multi-Account Support
+
+The client now supports managing multiple Telegram accounts. You can add, switch between, and manage multiple accounts without leaving the interface.
+
+### Quick Start
+
+1. **First launch**: When you start the client for the first time, you'll be prompted to add your phone number.
+
+2. **Add another account**: Inside the client, use the command:
+   ```
+   /account add +79991234567
+   ```
+
+3. **Switch accounts**: Use:
+   ```
+   /account set +79999876543
+   ```
+   Then restart the client to apply changes.
+
+4. **View all accounts**: 
+   ```
+   /account list
+   ```
+
+For detailed instructions, see [MULTI_ACCOUNT.md](MULTI_ACCOUNT.md)
+
+### Account Selection Menu
+
+When you have multiple accounts, launching the client will show an interactive menu:
+
+```
+              Select Telegram Account
+==================================================
+
+▶ +79991234567
+  +79999876543
+  +79995554444
+
+↑/↓ or j/k: Navigate | Enter: Select | q: Quit
+```
+
+Navigate with arrow keys or `j`/`k` and press Enter to select an account.

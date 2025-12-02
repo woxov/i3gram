@@ -7,6 +7,8 @@ from types import FrameType
 from typing import Optional
 
 from tg import config, update_handlers, utils
+from tg.accounts import AccountManager
+from tg.account_selector import AccountSelector
 from tg.controllers import Controller
 from tg.models import Model
 from tg.tdlib import Tdlib
@@ -54,14 +56,61 @@ def parse_args() -> None:
         exit(0)
 
 
+def select_account(stdscr: window) -> Optional[str]:
+    """Show account selector and return selected phone"""
+    manager = AccountManager()
+    
+    if not manager.has_accounts():
+        return None
+    
+    accounts = manager.get_all_accounts()
+    if len(accounts) == 1:
+        return accounts[0]
+    
+    selector = AccountSelector(accounts)
+    return selector.run(stdscr)
+
+
 def main() -> None:
     parse_args()
     utils.cleanup_cache()
+    
+    # Initialize account manager
+    manager = AccountManager()
+    
+    # If no accounts, create from config
+    if not manager.has_accounts():
+        phone = config.PHONE
+        if not phone:
+            print("Enter your phone number in international format (including country code)")
+            phone = input("phone> ")
+            if not phone.startswith("+"):
+                phone = "+" + phone
+        
+        enc_key = config.ENC_KEY if hasattr(config, 'ENC_KEY') else ""
+        manager.add_account(phone, enc_key)
+    
+    # Show account selector if multiple accounts
+    if manager.has_accounts():
+        accounts = manager.get_all_accounts()
+        if len(accounts) > 1:
+            selected_phone = wrapper(select_account)
+            if selected_phone == "quit" or selected_phone is None:
+                exit(0)
+            manager.set_current_account(selected_phone)
+        else:
+            manager.set_current_account(accounts[0])
+    
+    phone, enc_key = manager.get_current_account()
+    if not phone:
+        print("No account selected")
+        exit(1)
+    
     tg = Tdlib(
         api_id=config.API_ID,
         api_hash=config.API_HASH,
-        phone=config.PHONE,
-        database_encryption_key=config.ENC_KEY,
+        phone=phone,
+        database_encryption_key=enc_key,
         files_directory=config.FILES_DIR,
         tdlib_verbosity=config.TDLIB_VERBOSITY,
         library_path=config.TDLIB_PATH,

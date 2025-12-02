@@ -77,14 +77,35 @@ class Tdlib(Telegram):
         return self._send_data(data)
 
     def send_message(
-        self, chat_id: int, text: str, entities: Optional[List[Dict[Any, Any]]] = None
+        self,
+        chat_id: int,
+        text: str,
+        entities: Optional[List[Dict[Any, Any]]] = None,
+        parse_mode: Union[str, None] = "MarkdownV2",  # "MarkdownV2" or "HTML"
     ) -> AsyncResult:
         formatted_text = {"@type": "formattedText", "text": text}
 
-        result = self.parse_text_entities(text)
-        result.wait()
-        if not result.error:
-            formatted_text = result.update  # type: ignore
+        if entities:
+            formatted_text["entities"] = entities
+        else:
+            # map parse_mode string to TDLib type
+            if parse_mode == "MarkdownV2":
+                pmode = "textParseModeMarkdown"
+                version = 2
+            elif parse_mode == "Markdown":
+                pmode = "textParseModeMarkdown"
+                version = 1
+            elif parse_mode == "HTML":
+                pmode = "textParseModeHTML"
+                version = 0
+            else:
+                pmode = "textParseModeMarkdown"
+                version = 2
+
+            result = self.parse_text_entities(text, pmode, version)
+            result.wait()
+            if not result.error:
+                formatted_text = result.update
 
         data = {
             "@type": "sendMessage",

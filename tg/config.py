@@ -28,6 +28,7 @@ API_HASH = "fd121358f59d764c57c55871aa0807ca"
 
 PHONE = None
 ENC_KEY = ""
+ACCOUNTS = {}  # dict with phone numbers as keys and enc_keys as values
 
 TDLIB_PATH = None
 
